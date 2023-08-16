@@ -1,0 +1,588 @@
+import socket
+
+import argparse
+
+import threading 
+
+import time
+
+import numpy as np
+
+import RPi.GPIO as GPIO
+
+F_NORMAL = 17 #앞바퀴 정상상태
+F_CW = 27 #앞바퀴 시계방향
+F_CCW = 22 #앞바퀴 반시계방향
+B_NORMAL = 10 #뒷바퀴 정상상태
+B_CW = 9 #뒷바퀴 시계방향
+B_CCW = 11 #뒷바퀴 반시계 방향
+
+LEFT = 0 #좌회전
+RIGHT = 5 #우회전
+GO = 6 #전진
+BACK = 13 #후진
+ALIGN = 19 #정렬
+STOP = 26 #정지
+
+H_ON = 23 #수평유지 on
+H_OFF = 24 #수평유지 off
+
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(F_CW, GPIO.OUT)
+GPIO.setup(F_CCW, GPIO.OUT)
+GPIO.setup(F_NORMAL, GPIO.OUT)
+GPIO.setup(B_CW, GPIO.OUT)
+GPIO.setup(B_CCW, GPIO.OUT)
+GPIO.setup(B_NORMAL, GPIO.OUT)
+
+GPIO.setup(LEFT, GPIO.OUT)
+GPIO.setup(RIGHT, GPIO.OUT)
+GPIO.setup(GO, GPIO.OUT)
+GPIO.setup(BACK, GPIO.OUT)
+GPIO.setup(ALIGN, GPIO.OUT)
+GPIO.setup(STOP, GPIO.OUT)
+
+GPIO.setup(H_ON, GPIO.OUT)
+GPIO.setup(H_OFF, GPIO.OUT)
+
+
+host = "172.20.10.2" 
+
+port = 7000
+
+user_list = {}
+
+def handle_client(client_socket, addr): 
+
+    print("접속한 클라이언트의 주소 입니다. : ", addr) 
+
+    
+
+    while(True):
+
+        data = client_socket.recv(1024) 			#client들로 부터 받아온 수신데이터 data변수에 저장 
+
+        word=data.decode("utf-8")			# 받은 data 디코딩
+
+        lst = []				
+
+        for i in word:					# 받은 data 배열로 나열 수신 문자중 NULL문자 ( /x00 )을 제거하기 위함 
+
+            lst.append(i)				# ex) 만일 u/x00이라는 데이터가 들어오면 lst[0] = 'u'   lst[1] = '/x00' 로 구성 
+
+        print(lst)					# 전체 data print 
+
+        print(lst[0])					# 첫번째 배열 문자 print         
+
+        if lst[0]=='a':   #cw			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.HIGH)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)            
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(F_CW, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'FCW'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")
+
+        elif lst[0]=='b':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.HIGH)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(F_CCW, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'FCCW'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")                    
+
+        elif lst[0]=='c':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.HIGH)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'FNORMAL'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")        
+
+        elif lst[0]=='d':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.HIGH)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(LEFT, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'LEFT'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")        
+
+        elif lst[0]=='e':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.HIGH)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(RIGHT, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'RIGHT'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")   
+
+        elif lst[0]=='f':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.HIGH)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(GO, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'GO'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")                                 
+
+        elif lst[0]=='g':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.HIGH)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(BACK, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'BACK'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")        
+
+        elif lst[0]=='h':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.HIGH)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(ALIGN, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'ALIGN'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")        
+
+        elif lst[0]=='i':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.HIGH)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(STOP, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'STOP'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")        
+
+        elif lst[0]=='j':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.HIGH)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(B_CW, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'BCW'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")    
+
+        elif lst[0]=='k':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.HIGH)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(B_CCW, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'BCCW'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")    
+
+        elif lst[0]=='l':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.HIGH)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'BNORMAL'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")    
+
+        elif lst[0]=='m':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.HIGH)
+            GPIO.output(H_OFF, GPIO.LOW)
+            time.sleep(0.3)
+            GPIO.output(H_ON, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'HON'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")   
+
+        elif lst[0]=='n':   			# 사용할 제어 문자는 첫번째 배열이므로 lst[0]에 들어온 data를 바탕으로 제어문 구성
+			
+            GPIO.output(F_CW, GPIO.LOW)
+            GPIO.output(F_CCW, GPIO.LOW)
+            GPIO.output(F_NORMAL, GPIO.LOW)
+            GPIO.output(B_CW, GPIO.LOW)            
+            GPIO.output(B_CCW, GPIO.LOW)
+            GPIO.output(B_NORMAL, GPIO.LOW)
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            GPIO.output(GO, GPIO.LOW)
+            GPIO.output(BACK, GPIO.LOW)
+            GPIO.output(ALIGN, GPIO.LOW)
+            GPIO.output(STOP, GPIO.LOW)
+            GPIO.output(H_ON, GPIO.LOW)
+            GPIO.output(H_OFF, GPIO.HIGH)
+            time.sleep(0.3)
+            GPIO.output(H_OFF, GPIO.LOW)
+			
+            print("recv data:", data.decode("utf-8"))
+
+            string = 'HOFF'
+
+            for con in user_list.values():			# 모든 클라이언트들에게 메세지 전송 
+
+                try:
+                    con.sendall(string.encode())		# 보내고 싶은 메세지 엔코딩후 전송 
+
+                except:
+                    print(" you have to fix ")                                           
+
+    del user_list[user]
+
+    client_socket.close()
+
+
+
+
+
+
+def accept_func(): 
+
+    global server_socket #IPv4 체계, TCP 타입 소켓 객체를 생성 
+
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #포트를 사용 중 일때 에러를 해결하기 위한 구문
+
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+
+    #ip주소와 port번호를 함께 socket에 바인드 한다.
+
+    #포트의 범위는 1-65535 사이의 숫자를 사용할 수 있다. 
+
+    server_socket.bind((host, port)) #서버가 최대 5개의 클라이언트의 접속을 허용한다. 
+
+    server_socket.listen(5)
+
+
+
+    while 1: 
+
+        try: #클라이언트 함수가 접속하면 새로운 소켓을 반환한다.
+
+            client_socket, addr = server_socket.accept() 
+
+        except KeyboardInterrupt:
+
+            server_socket.close()
+
+            print("Keyboard interrupt")
+
+            
+
+        print("클라이언트 핸들러 스레드로 이동 됩니다.")
+
+        user = client_socket.recv(1024)
+
+        user_list[user] = client_socket
+
+        #accept()함수로 입력만 받아주고 이후 알고리즘은 핸들러에게 맡긴다. 
+
+        t = threading.Thread(target=handle_client, args=(client_socket, addr)) 
+
+        t.daemon = True 
+
+        t.start()
+
+
+
+if __name__ == '__main__': 
+
+    parser = argparse.ArgumentParser(description="\nJoo's server\n-p port\n") 
+
+    parser.add_argument('-p', help="port") 
+
+    args = parser.parse_args() 
+
+    try:
+
+        port = int(args.p)
+
+    except:
+
+        pass 
+
+    accept_func()
+    
+    
+GPIO.cleanup();
