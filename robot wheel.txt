@@ -1,0 +1,86 @@
+// 라즈베리파이 - 아두이노 우노
+// 바퀴 가변을 위한 서보모터 코드
+
+#include <Servo.h>
+
+Servo R1;   // R1 서보모터 설정
+Servo L1;   // L1 서보모터 설정
+Servo R2;   // R2 서보모터 설정
+Servo L2;   // L2 서보모터 설정
+
+#define servo_cw_F 5      // 앞 바퀴 2개 CW로 가변 핀 번호
+#define servo_ccw_F 6     // 앞 바퀴 2개 CCW로 가변 핀 번호
+#define servo_normal_F 7  // 앞 바퀴 2개 normal로 가변 핀 번호
+
+#define servo_cw_B 8      // 뒷 바퀴 2개 CW로 가변 핀 번호
+#define servo_ccw_B 9     // 뒷 바퀴 2개 CCW로 가변 핀 번호
+#define servo_normal_B 10 // 뒷 바퀴 2개 normal로 가변 핀 번호
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(servo_cw_F, INPUT);       // 앞 바퀴 2개 CW로 가변 핀 설정
+  pinMode(servo_ccw_F, INPUT);      // 앞 바퀴 2개 CCW로 가변 핀 설정
+  pinMode(servo_normal_F, INPUT);   // 앞 바퀴 2개 normal로 가변 핀 설정
+  pinMode(servo_cw_B, INPUT);       // 뒷 바퀴 2개 CW로 가변 핀 설정
+  pinMode(servo_ccw_B, INPUT);      // 뒷 바퀴 2개 CCW로 가변 핀 설정
+  pinMode(servo_normal_B, INPUT);   // 뒷 바퀴 2개 normal로 가변 핀 설정
+  R1.attach(2);                     // R1 서보모터 핀 설정
+  L1.attach(4);                     // L1 서보모터 핀 설정
+  R2.attach(11);                    // R2 서보모터 핀 설정
+  L2.attach(13);                    // L2 서보모터 핀 설정
+  R1.write(80);                     // R1 초기 각도 : normal
+  L1.write(85);                     // L1 초기 각도 : normal
+  R2.write(85);                     // R2 초기 각도 : normal
+  L2.write(90);                     // L2 초기 각도 : normal
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  if(digitalRead(servo_cw_F)==HIGH)     // 앞 바퀴 2개 CW로 가변 명령
+  {
+    delay(100);
+    R1.write(100);                      // R1 CW로 가변
+    L1.write(60);                       // L1 CW로 가변
+    delay(100);
+  }
+
+  if(digitalRead(servo_cw_B)==HIGH)     // 뒷 바퀴 2개 CW로 가변 명령
+  {
+    delay(100);
+    R2.write(108);                      // R2 CW로 가변
+    L2.write(70);                       // L2 CW로 가변
+    delay(100);
+  }
+  
+  if(digitalRead(servo_ccw_F)==HIGH)    // 앞 바퀴 2개 CCW로 가변 명령
+  {
+    delay(100);
+    R1.write(55);                       // R1 CCW로 가변
+    L1.write(120);                      // L1 CCW로 가변
+    delay(100);
+  }
+
+  if(digitalRead(servo_ccw_B)==HIGH)    // 뒷 바퀴 2개 CCW로 가변 명령
+  {
+    delay(100);
+    R2.write(55);                       // R2 CCW로 가변
+    L2.write(120);                      // L2 CCW로 가변
+    delay(100);
+  }
+  
+  if(digitalRead(servo_normal_F)==HIGH) // 앞 바퀴 2개 normal로 가변 명령
+  {
+    delay(100);
+    R1.write(80);                       // R1 normal로 가변
+    L1.write(85);                       // L1 normal로 가변
+    delay(100);
+  }
+
+  if(digitalRead(servo_normal_B)==HIGH) // 뒷 바퀴 2개 normal로 가변
+  {
+    delay(100);
+    R2.write(85);                       // R2 normal로 가변
+    L2.write(90);                       // L2 normal로 가변
+    delay(100);
+  }
+}
