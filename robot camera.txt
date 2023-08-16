@@ -1,0 +1,104 @@
+
+
+int ocr1a;
+int ocr1b;
+
+float target_a;
+float error_a;
+float bef_error_a;
+float def_error_a;
+float error_sum_a;
+float P_a,I_a,D_a;
+
+float target_b;
+float error_b;
+float bef_error_b;
+float def_error_b;
+float error_sum_b;
+float P_b,I_b,D_b;
+
+
+
+
+
+
+void setup()
+{      
+  Serial.begin(19200);
+  
+  Wire.begin();
+
+  MPU6050_setup();
+
+
+  //pin 설정. 서보모터 쪽 출력(ouput) 설정
+  DDRB = 0b00000110;
+  
+  //PWM 설정. 8 분주, top :ICR1 Fast PWM mode
+  TCCR1A = (1<<COM1A1)|(1<<COM1B1)|(1<<WGM11); 
+  TCCR1B = (1<<WGM13)|(1<<WGM12)|(1<<CS11);
+  ICR1 = 39999;  //40000번 세면 20ms  
+
+}
+
+
+void loop()
+{
+  MPU6050_data_read();
+  Serial.print(accel_x, 2);
+  Serial.print("\t");
+  Serial.print(accel_y, 2);
+  Serial.print("\t");
+  Serial.print(accel_z, 2);
+  Serial.print("\n");
+
+
+
+  target_a = 3140 - 0.04*(accel_x - 980.0); //좌우 . 가속도는 비례제어만 구현. 980은 가속도 초기치. 3140은 서보모터 지면과 평행한 값
+  bef_error_a = error_a;
+  error_a = target_a - (angle_y + 1.25);    //1.25는 각도 초기치 
+  def_error_a = error_a - bef_error_a;
+  error_sum_a += error_a;
+
+  //PID 게인. dt 포함
+  P_a = 32.0;
+  I_a = 0.00001;
+  D_a = 0.001;
+  
+  ocr1a = P_a*error_a + I_a*error_sum_a + D_a*def_error_a;
+
+
+  
+  target_b = 3080 - 0.025*(accel_y - 680.0); //앞뒤 . 가속도는 비례제어만 구현. 680은 가속도 초기치. 3080은 서보모터 지면과 평행한 값
+  bef_error_b = error_b;
+  error_b = target_b - (angle_x - 1.92);    //1.25는 각도 초기치 
+  def_error_b = error_b - bef_error_b;
+  error_sum_b += error_b;
+
+  //PID 게인. dt 포함
+  P_b = 30.0;
+  I_b = 0.000015;
+  D_b = 0.0008;
+  
+  ocr1b = -(P_b*error_b + I_b*error_sum_b + D_b*def_error_b);
+  
+
+
+
+  //각도 단순 비례제어
+  ocr1a = 3140 + 8.0*(angle_y + 1.25) - 0.04*(accel_x - 980.0); //좌우
+  ocr1b = 3080 - 20.0*(angle_x - 1.92) - 0.025*(accel_y - 680.0);  //앞뒤
+
+
+//  if(ocr1a < 2600)    ocr1a = 2600;
+//  if(ocr1a > 3600)    ocr1a = 3600;
+//  if(ocr1b < 2580)    ocr1b = 2580;
+//  if(ocr1b > 3580)    ocr1b = 3580;
+
+  OCR1A = ocr1a;  //2600~3100~3600
+  OCR1B = ocr1b;  //2580~3080~3580
+
+  
+  delay(100);
+  
+}
